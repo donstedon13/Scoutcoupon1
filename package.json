@@ -1,0 +1,13 @@
+{
+  "name": "scoutcoupon",
+  "version": "1.0.0",
+  "description": "Daily football analytics scraper — FBref data",
+  "main": "scraper.js",
+  "scripts": {
+    "scrape": "node scraper.js",
+    "start": "node scraper.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

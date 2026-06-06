@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>ScoutCoupon · 2 Παράμετροι</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#080a0f;--bg2:#0d0f16;--bg3:#12151e;--b1:#1e2330;--b2:#252c3d;
+  --t1:#edf0f8;--t2:#8890a8;--t3:#4a5168;--t4:#2e3448;
+  --gold:#f5c842;--orange:#f07840;--green:#38d98a;--red:#f05060;--blue:#4ab0f5;
+}
+html,body{background:var(--bg);color:var(--t1);font-family:"DM Sans",sans-serif;min-height:100vh;overflow-x:hidden}
+header{background:rgba(8,10,15,.97);border-bottom:1px solid var(--b1);position:sticky;top:0;z-index:200;backdrop-filter:blur(24px)}
+.hi{max-width:860px;margin:0 auto;padding:0 14px}
+.ht{display:flex;align-items:center;justify-content:space-between;padding:11px 0 9px;gap:10px}
+.logo{display:flex;align-items:center;gap:10px}
+.lmark{width:36px;height:36px;border-radius:9px;flex-shrink:0;background:linear-gradient(135deg,var(--gold),var(--orange));display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",sans-serif;font-size:14px;color:#080a0f;box-shadow:0 0 20px rgba(245,200,66,.3)}
+.ltitle{font-family:"Bebas Neue",sans-serif;font-size:20px;letter-spacing:2px;line-height:1;white-space:nowrap}
+.ltitle em{color:var(--gold);font-style:normal}
+.lsub{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--t3);letter-spacing:1.5px;margin-top:1px}
+.hstat{display:flex;align-items:center;gap:5px;font-family:"JetBrains Mono",monospace;font-size:9px;padding:5px 10px;border-radius:20px;border:1px solid;flex-shrink:0;white-space:nowrap}
+.hstat.idle{color:var(--t3);border-color:var(--b1)}
+.hstat.go{color:var(--gold);border-color:rgba(245,200,66,.35);background:rgba(245,200,66,.07);animation:pulse 1.5s infinite}
+.hstat.ok{color:var(--green);border-color:rgba(56,217,138,.35);background:rgba(56,217,138,.07)}
+.hstat.err{color:var(--red);border-color:rgba(240,80,96,.35);background:rgba(240,80,96,.07)}
+.hdot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.legend{display:flex;gap:8px;padding:10px 0 9px;overflow-x:auto;scrollbar-width:none}
+.legend::-webkit-scrollbar{display:none}
+.leg-item{display:flex;align-items:center;gap:6px;font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--t2);white-space:nowrap;padding:5px 10px;border-radius:20px;border:1px solid var(--b1);background:var(--bg3)}
+.ldot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.ldot.goals{background:linear-gradient(135deg,var(--green),#2ab870)}
+.ldot.draw{background:linear-gradient(135deg,var(--blue),#3a8fd4)}
+main{max-width:860px;margin:0 auto;padding:16px 14px 60px}
+.ctrl{background:var(--bg2);border:1px solid var(--b1);border-radius:16px;padding:16px;margin-bottom:14px}
+.clbl{font-family:"JetBrains Mono",monospace;font-size:8.5px;color:var(--t3);text-transform:uppercase;letter-spacing:2px;margin-bottom:11px}
+/* Data freshness banner */
+.fresh-banner{background:rgba(56,217,138,.07);border:1px solid rgba(56,217,138,.2);border-radius:10px;padding:10px 14px;font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--green);line-height:1.7;margin-bottom:13px;display:none}
+.fresh-banner.warn{background:rgba(245,200,66,.07);border-color:rgba(245,200,66,.25);color:var(--gold)}
+.srow{margin-bottom:0}
+.shdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.slbl{font-size:13px;color:var(--t2)}
+.sval{font-family:"Bebas Neue",sans-serif;font-size:30px;color:var(--gold);letter-spacing:-1px;line-height:1}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--gold) var(--p,50%),var(--b2) var(--p,50%));outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--gold);border:3px solid var(--bg);box-shadow:0 0 0 2px #e8a820;cursor:pointer}
+.sticks{display:flex;justify-content:space-between;margin-top:4px}
+.sticks span{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--t4)}
+/* Loading */
+.loading{text-align:center;padding:60px 16px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--t3);line-height:2.2}
+.loading-ico{font-size:36px;display:block;margin-bottom:14px;animation:spin 1.5s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+/* Summary */
+.sum-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:18px}
+.scard{background:var(--bg2);border:1px solid var(--b1);border-radius:12px;padding:11px 6px;text-align:center}
+.sico{font-size:15px;margin-bottom:3px}
+.snum{font-family:"Bebas Neue",sans-serif;font-size:22px;line-height:1}
+.snm{font-family:"JetBrains Mono",monospace;font-size:7px;color:var(--t3);margin-top:1px;letter-spacing:.5px}
+/* Match */
+.match-block{background:var(--bg2);border:1px solid var(--b1);border-radius:16px;margin-bottom:12px;overflow:hidden;animation:fadeUp .4s ease both}
+.mb-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--bg3);border-bottom:1px solid var(--b1)}
+.mb-league{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--t2);letter-spacing:.8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.mb-time{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--t3);flex-shrink:0}
+.mb-src{font-family:"JetBrains Mono",monospace;font-size:8px;padding:2px 7px;border-radius:20px;background:rgba(56,217,138,.1);border:1px solid rgba(56,217,138,.25);color:var(--green);flex-shrink:0}
+.mb-sr{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid var(--b1);gap:4px}
+.mb-team{flex:1;min-width:0}
+.mb-tname{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mb-sc{font-family:"Bebas Neue",sans-serif;font-size:28px;min-width:28px;text-align:center;line-height:1;flex-shrink:0;color:var(--t2)}
+.mb-vs{font-family:"JetBrains Mono",monospace;font-size:9px;color:var(--t4);min-width:18px;text-align:center;flex-shrink:0}
+.mb-picks{padding:10px 14px 14px}
+/* Form pills */
+.form-row{display:flex;gap:6px;margin:8px 0 4px;flex-wrap:wrap}
+.form-lbl{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--t3);letter-spacing:1px;align-self:center}
+.fc{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:4px;font-family:"JetBrains Mono",monospace;font-size:9px;font-weight:600}
+.fc.W{background:rgba(56,217,138,.2);color:var(--green)}
+.fc.D{background:rgba(74,176,245,.2);color:var(--blue)}
+.fc.L{background:rgba(240,80,96,.18);color:var(--red)}
+/* Goals grid */
+.sec-lbl{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--t3);letter-spacing:2px;text-transform:uppercase;margin:10px 0 5px;display:flex;align-items:center;gap:6px}
+.sec-lbl::after{content:"";flex:1;height:1px;background:var(--b1)}
+.goals-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.goal-cell{background:var(--bg3);border:1px solid var(--b1);border-radius:10px;padding:10px 8px;text-align:center;position:relative}
+.goal-cell.best{border-color:rgba(56,217,138,.35);background:rgba(56,217,138,.05)}
+.gc-range{font-family:"Bebas Neue",sans-serif;font-size:19px;line-height:1;color:var(--t2);margin-bottom:3px}
+.gc-range.best{color:var(--green)}
+.gc-pct{font-family:"Bebas Neue",sans-serif;font-size:28px;line-height:1}
+.gc-pct.high{color:var(--green)}.gc-pct.med{color:var(--gold)}.gc-pct.low{color:var(--t3)}
+.gc-det{font-family:"JetBrains Mono",monospace;font-size:7.5px;color:var(--t3);margin-top:3px;line-height:1.4}
+.gc-bar{height:3px;border-radius:2px;background:var(--b2);overflow:hidden;margin-top:7px}
+/* Draw */
+.draw-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.draw-cell{background:var(--bg3);border:1px solid rgba(74,176,245,.2);border-radius:10px;padding:10px 10px;text-align:center}
+.dc-label{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--blue);letter-spacing:1px;margin-bottom:4px}
+.dc-pct{font-family:"Bebas Neue",sans-serif;font-size:30px;line-height:1}
+.dc-pct.high{color:var(--green)}.dc-pct.med{color:var(--gold)}.dc-pct.low{color:var(--t3)}
+.dc-det{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--t3);margin-top:4px;line-height:1.5}
+.dc-bar{height:2px;border-radius:1px;background:rgba(74,176,245,.15);overflow:hidden;margin-top:7px}
+/* BTTS/O25 row */
+.stat-row{display:flex;gap:6px;margin-top:8px}
+.stat-pill{flex:1;background:var(--bg3);border:1px solid var(--b1);border-radius:8px;padding:7px 8px;text-align:center}
+.stat-pill-lbl{font-family:"JetBrains Mono",monospace;font-size:7.5px;color:var(--t3);letter-spacing:.8px}
+.stat-pill-val{font-family:"Bebas Neue",sans-serif;font-size:20px;line-height:1.1}
+/* Misc */
+.empty{text-align:center;padding:50px 16px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--t3);line-height:2}
+.empty-ico{font-size:36px;display:block;margin-bottom:12px}
+.err-box{background:rgba(240,80,96,.06);border:1px solid rgba(240,80,96,.2);border-radius:12px;padding:12px 14px;font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--red);line-height:1.7;margin-bottom:12px;display:none}
+.disc{background:var(--bg2);border:1px solid var(--b1);border-radius:10px;padding:11px 14px;font-size:10px;color:var(--t3);line-height:1.7;margin-top:20px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){
+  .sum-strip{gap:5px}.snum{font-size:18px}.snm{font-size:6.5px}
+  .mb-tname{font-size:13px}.mb-sc{font-size:24px;min-width:24px}
+  .goals-row{gap:5px}.gc-pct{font-size:24px}.dc-pct{font-size:26px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="hi">
+    <div class="ht">
+      <div class="logo">
+        <div class="lmark">SC</div>
+        <div>
+          <div class="ltitle">Scout<em>Coupon</em></div>
+          <div class="lsub">Γκολ · Ισοπαλία · FBref Real Data</div>
+        </div>
+      </div>
+      <div class="hstat idle" id="hstat"><div class="hdot"></div><span id="hstatTxt">ΦΟΡΤΩΣΗ</span></div>
+    </div>
+    <div class="legend">
+      <div class="leg-item"><div class="ldot goals"></div>ΓΚΟΛ 0-1 / 2-3 / 4+</div>
+      <div class="leg-item"><div class="ldot draw"></div>Χ ΗΜΙΧΡΟΝΟ · Χ ΤΕΛΙΚΟ</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="ctrl">
+    <div class="clbl">📅 Σήμερα · Φίλτρο αποτελεσμάτων</div>
+    <div class="fresh-banner" id="freshBanner"></div>
+    <div class="srow">
+      <div class="shdr">
+        <span class="slbl">Ελάχιστο ποσοστό εμπιστοσύνης</span>
+        <span class="sval" id="sval">45%</span>
+      </div>
+      <input type="range" id="slider" min="20" max="100" value="45" step="1" oninput="onSlider(this.value)">
+      <div class="sticks"><span>20%</span><span>35%</span><span>45%</span><span>65%</span><span>80%+</span></div>
+    </div>
+  </div>
+
+  <div class="err-box" id="errBox"></div>
+
+  <div id="loadingMsg" class="loading">
+    <span class="loading-ico">📡</span>
+    Φόρτωση δεδομένων ημέρας...
+  </div>
+
+  <div id="results" style="display:none">
+    <div class="sum-strip" id="sumStrip"></div>
+    <div id="matchContainer"></div>
+  </div>
+
+  <div id="idleMsg" class="empty" style="display:none">
+    <span class="empty-ico">📭</span>
+    Δεν υπάρχουν δεδομένα για σήμερα.<br>
+    Το scraping τρέχει κάθε πρωί στις 08:00.<br>
+    <span style="color:var(--t4)">Ή εκτέλεσε χειροκίνητα από το GitHub Actions.</span>
+  </div>
+
+  <div class="disc">⚠️ Τα δεδομένα αντλούνται αυτόματα κάθε πρωί από FBref.com (φόρμα, xG, ιστορικό). Τα ποσοστά είναι στατιστικές εκτιμήσεις — δεν αποτελούν εγγύηση αποτελέσματος. Παίξτε υπεύθυνα.</div>
+</main>
+
+<script>
+(function(){
+"use strict";
+
+var minPct    = 45;
+var allMatches = [];
+
+// ── Helpers ─────────────────────────────────────────────────────
+function pad(n){ return String(n).padStart(2,"0"); }
+function fmtISO(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function setStatus(s,t){ document.getElementById("hstat").className="hstat "+s; document.getElementById("hstatTxt").textContent=t; }
+function pcls(p){ return p>=65?"high":p>=42?"med":"low"; }
+
+function onSlider(v){
+  minPct=parseInt(v);
+  document.getElementById("sval").textContent=v+"%";
+  var p=((v-20)/80*100).toFixed(1)+"%";
+  document.getElementById("slider").style.setProperty("--p",p);
+  if(allMatches.length) renderAll();
+}
+window.onSlider = onSlider;
+
+// ── Load JSON data ───────────────────────────────────────────────
+async function loadData(){
+  setStatus("go","ΦΟΡΤΩΣΗ...");
+  document.getElementById("loadingMsg").style.display="block";
+
+  const today = fmtISO(new Date());
+
+  // Try today's file first, then latest.json
+  const urls = [
+    `data/${today}.json`,
+    `data/latest.json`
+  ];
+
+  let payload = null;
+  for(const url of urls){
+    try{
+      const r = await fetch(url);
+      if(!r.ok) continue;
+      payload = await r.json();
+      break;
+    } catch(e){ continue; }
+  }
+
+  document.getElementById("loadingMsg").style.display="none";
+
+  if(!payload || !payload.matches || !payload.matches.length){
+    document.getElementById("idleMsg").style.display="block";
+    setStatus("err","ΔΕΝ ΒΡΕΘΗΚΑΝ");
+    return;
+  }
+
+  // Show freshness banner
+  const banner = document.getElementById("freshBanner");
+  banner.style.display="block";
+  const isToday = payload.date === today;
+  const genTime = new Date(payload.generated).toLocaleTimeString("el-GR",{hour:"2-digit",minute:"2-digit"});
+  if(isToday){
+    banner.className="fresh-banner";
+    banner.innerHTML=`✅ Δεδομένα σήμερα ${payload.date} · Ενημερώθηκε: ${genTime} · ${payload.matchCount} αγώνες · Πηγή: FBref.com`;
+  } else {
+    banner.className="fresh-banner warn";
+    banner.innerHTML=`⚠️ Τελευταία δεδομένα: ${payload.date} · Ενημερώθηκε: ${genTime} · Σήμερα (${today}) δεν έτρεξε ακόμα το scraping`;
+  }
+
+  allMatches = payload.matches;
+  document.getElementById("results").style.display="block";
+  renderAll();
+  setStatus("ok", payload.matchCount+" αγώνες · FBref");
+}
+
+// ── Render ───────────────────────────────────────────────────────
+function renderFormPill(ch){
+  return `<span class="fc ${ch}">${ch}</span>`;
+}
+
+function renderMatch(m, delay){
+  var a = m.analysis;
+  var anyVisible = (a.goals.pct01>=minPct || a.goals.pct23>=minPct || a.goals.pct4p>=minPct
+                 || a.draw.ht>=minPct || a.draw.ft>=minPct);
+  if(!anyVisible) return "";
+
+  // Form pills
+  var formRow = "";
+  var hForm = a.meta?.homeForm;
+  var aForm = a.meta?.awayForm;
+  if(hForm?.formString || aForm?.formString){
+    formRow = '<div class="form-row">';
+    if(hForm?.formString){
+      formRow += `<span class="form-lbl">${m.home.split(" ")[0]}:</span>`;
+      formRow += hForm.formString.split("").map(renderFormPill).join("");
+    }
+    if(aForm?.formString){
+      formRow += `<span class="form-lbl" style="margin-left:8px">${m.away.split(" ")[0]}:</span>`;
+      formRow += aForm.formString.split("").map(renderFormPill).join("");
+    }
+    formRow += "</div>";
+  }
+
+  // Data source badge
+  var srcBadge = "";
+  var src = a.meta?.dataSource||"";
+  if(src==="fbref+form")    srcBadge='<div class="mb-src">📊 Φόρμα+xG</div>';
+  else if(src==="fbref+xg") srcBadge='<div class="mb-src">📐 xG</div>';
+  else                      srcBadge='<div class="mb-src" style="color:var(--t3);background:transparent;border-color:var(--b1)">📋 Λίγκα</div>';
+
+  // Goals cells
+  function goalCell(range, pct, detail, isBest){
+    return '<div class="goal-cell'+(isBest?" best":"")+'">'+
+      '<div class="gc-range'+(isBest?" best":"")+'">'+range+'</div>'+
+      '<div class="gc-pct '+pcls(pct)+'">'+pct+'%</div>'+
+      '<div class="gc-det">'+detail+'</div>'+
+      '<div class="gc-bar"><div style="width:'+Math.min(pct,100)+'%;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--green),#2ab870);transition:width 1s"></div></div>'+
+    '</div>';
+  }
+
+  var goalsHTML = '<div class="sec-lbl">⚽ Γκολ αγώνα</div>';
+  goalsHTML    += '<div class="goals-row">';
+  goalsHTML    += goalCell("0-1", a.goals.pct01, a.goals.detail01, a.goals.best01);
+  goalsHTML    += goalCell("2-3", a.goals.pct23, a.goals.detail23, a.goals.best23);
+  goalsHTML    += goalCell("4+",  a.goals.pct4p, a.goals.detail4p, a.goals.best4p);
+  goalsHTML    += '</div>';
+
+  // BTTS / Over 2.5 real stats
+  if(a.goals.bttsRate!==null || a.goals.over25Rate!==null){
+    goalsHTML += '<div class="stat-row">';
+    if(a.goals.bttsRate!==null){
+      goalsHTML += '<div class="stat-pill"><div class="stat-pill-lbl">BTTS ΙΣΤΟΡΙΚΟ</div>'+
+        '<div class="stat-pill-val '+pcls(a.goals.bttsRate)+'">'+a.goals.bttsRate+'%</div></div>';
+    }
+    if(a.goals.over25Rate!==null){
+      goalsHTML += '<div class="stat-pill"><div class="stat-pill-lbl">OVER 2.5 ΙΣΤΟΡΙΚΟ</div>'+
+        '<div class="stat-pill-val '+pcls(a.goals.over25Rate)+'">'+a.goals.over25Rate+'%</div></div>';
+    }
+    goalsHTML += '</div>';
+  }
+
+  // Draw cells
+  function drawCell(label, pct, detail){
+    return '<div class="draw-cell">'+
+      '<div class="dc-label">'+label+'</div>'+
+      '<div class="dc-pct '+pcls(pct)+'">'+pct+'%</div>'+
+      '<div class="dc-det">'+detail+'</div>'+
+      '<div class="dc-bar"><div style="width:'+Math.min(pct,100)+'%;height:100%;border-radius:2px;background:linear-gradient(90deg,var(--blue),#3a8fd4);transition:width 1s"></div></div>'+
+    '</div>';
+  }
+  var drawHTML = '<div class="sec-lbl" style="margin-top:13px">🤝 Ισοπαλία Χ</div>';
+  drawHTML    += '<div class="draw-row">';
+  drawHTML    += drawCell("Χ ΗΜΙΧΡΟΝΟ", a.draw.ht, a.draw.htDetail);
+  drawHTML    += drawCell("Χ ΤΕΛΙΚΟ",   a.draw.ft, a.draw.ftDetail);
+  drawHTML    += '</div>';
+
+  return '<div class="match-block" style="animation-delay:'+delay+'s">'+
+    '<div class="mb-hdr">'+
+      '<div class="mb-league">'+m.flag+' '+m.league+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<div class="mb-time">'+(m.time||"")+'</div>'+
+        srcBadge+
+      '</div>'+
+    '</div>'+
+    '<div class="mb-sr">'+
+      '<div class="mb-team"><div class="mb-tname">'+m.home+'</div></div>'+
+      '<div class="mb-sc">—</div>'+
+      '<div class="mb-vs">vs</div>'+
+      '<div class="mb-sc">—</div>'+
+      '<div class="mb-team" style="text-align:right"><div class="mb-tname" style="text-align:right">'+m.away+'</div></div>'+
+    '</div>'+
+    '<div class="mb-picks">'+formRow+goalsHTML+drawHTML+'</div>'+
+  '</div>';
+}
+
+function renderAll(){
+  var cntGoals=0, cntDraw=0, hotGoals=0, hotDraw=0;
+  allMatches.forEach(function(m){
+    var a=m.analysis;
+    if(a.goals.pct01>=minPct||a.goals.pct23>=minPct||a.goals.pct4p>=minPct) cntGoals++;
+    if(a.draw.ht>=minPct||a.draw.ft>=minPct) cntDraw++;
+    if(Math.max(a.goals.pct01,a.goals.pct23,a.goals.pct4p)>=75) hotGoals++;
+    if(Math.max(a.draw.ht,a.draw.ft)>=65) hotDraw++;
+  });
+
+  document.getElementById("sumStrip").innerHTML=
+    '<div class="scard"><div class="sico">⚽</div><div class="snum" style="color:var(--green)">'+cntGoals+'</div><div class="snm">ΓΚΟΛ</div></div>'+
+    '<div class="scard"><div class="sico">🤝</div><div class="snum" style="color:var(--blue)">'+cntDraw+'</div><div class="snm">Χ ΑΓΩΝΕΣ</div></div>'+
+    '<div class="scard"><div class="sico">🔥</div><div class="snum" style="color:var(--gold)">'+hotGoals+'</div><div class="snm">HOT ΓΚΟΛ</div></div>'+
+    '<div class="scard"><div class="sico">⭐</div><div class="snum" style="color:var(--red)">'+hotDraw+'</div><div class="snm">HOT Χ</div></div>';
+
+  var html=""; var vis=0;
+  allMatches.forEach(function(m,i){
+    var b=renderMatch(m,i*0.04);
+    if(b){ html+=b; vis++; }
+  });
+
+  document.getElementById("matchContainer").innerHTML = html ||
+    '<div class="empty"><span class="empty-ico">🔍</span>Δεν υπάρχουν αγώνες πάνω από '+minPct+'%<br>Χαμήλωσε το slider για περισσότερα</div>';
+}
+
+// ── Init ─────────────────────────────────────────────────────────
+onSlider(45);
+loadData();
+
+})();
+</script>
+</body>
+</html>
