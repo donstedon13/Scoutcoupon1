@@ -22,14 +22,14 @@ jobs:
           node-version: '22'
 
       - name: Run scraper
-        run: run: node scraper.js
-      env:
-        APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
+        run: node scraper.js
+        env:
+          APISPORTS_KEY: ${{ secrets.APISPORTS_KEY }}
 
       - name: Commit & push data
         run: |
-          git config user.name  "ScoutCoupon Bot"
+          git config user.name "ScoutCoupon Bot"
           git config user.email "bot@scoutcoupon"
           git add data/
-          git diff --staged --quiet || git commit -m "📊 Daily data $(date +'%Y-%m-%d')"
+          git diff --staged --quiet || git commit -m "Daily data $(date +'%Y-%m-%d')"
           git push
