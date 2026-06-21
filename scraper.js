@@ -6,148 +6,214 @@ function pad(n){ return String(n).padStart(2,"0"); }
 function fmtISO(d){ return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-const API_KEY = process.env.APISPORTS_KEY;
-if(!API_KEY){ console.error("❌ APISPORTS_KEY secret λείπει!"); process.exit(1); }
-
 const FLAGS = {
-  "Premier League":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","La Liga":"🇪🇸","Bundesliga":"🇩🇪","Serie A":"🇮🇹",
-  "Ligue 1":"🇫🇷","Eredivisie":"🇳🇱","Liga Portugal":"🇵🇹","Super Lig":"🇹🇷",
-  "Champions League":"🇪🇺","Europa League":"🇪🇺","Conference League":"🇪🇺",
-  "MLS":"🇺🇸","Brasileirao":"🇧🇷","Super League":"🇬🇷","Greek":"🇬🇷"
+  "English Premier League":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","La Liga":"🇪🇸","Bundesliga":"🇩🇪",
+  "Serie A":"🇮🇹","Ligue 1":"🇫🇷","Eredivisie":"🇳🇱","Primeira Liga":"🇵🇹",
+  "Super Lig":"🇹🇷","Champions League":"🇪🇺","UEFA Champions League":"🇪🇺",
+  "Europa League":"🇪🇺","UEFA Europa League":"🇪🇺","Conference League":"🇪🇺",
+  "MLS":"🇺🇸","Brasileirao":"🇧🇷","Super League":"🇬🇷","Greek":"🇬🇷",
+  "Scottish":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Belgian":"🇧🇪","Argentine":"🇦🇷","Mexican":"🇲🇽",
+  "Saudi":"🇸🇦","Japanese":"🇯🇵","Korean":"🇰🇷","Australian":"🇦🇺",
+  "Club World Cup":"🌍","FIFA":"🌍","World Cup":"🌍"
 };
-function flagFor(l=""){ for(const k in FLAGS) if(l.includes(k)) return FLAGS[k]; return "⚽"; }
+function flagFor(l=""){
+  for(const k in FLAGS) if(l.includes(k)) return FLAGS[k];
+  return l.toLowerCase().includes("cup")?"🏆":"⚽";
+}
 
-function apiRequest(endpoint){
-  return new Promise((resolve, reject) => {
-    const options = {
-      hostname: "v3.football.api-sports.io",
-      path: endpoint,
-      method: "GET",
-      headers: {
-        "x-apisports-key": API_KEY,
-        "x-rapidapi-host": "v3.football.api-sports.io"
-      },
-      timeout: 15000
-    };
-    const req = https.request(options, res => {
-      let body = "";
-      res.on("data", c => body += c);
-      res.on("end", () => {
+function apiGet(url){
+  return new Promise((resolve,reject)=>{
+    https.get(url,{
+      headers:{"User-Agent":"ScoutCoupon/1.0"},
+      timeout:15000
+    },res=>{
+      let body="";
+      res.on("data",c=>body+=c);
+      res.on("end",()=>{
         try{ resolve(JSON.parse(body)); }
-        catch(e){ reject(new Error("JSON parse error")); }
+        catch(e){ reject(new Error("JSON error")); }
       });
-    });
-    req.on("error", reject);
-    req.on("timeout", () => { req.destroy(); reject(new Error("Timeout")); });
-    req.end();
+    }).on("error",reject).on("timeout",function(){ this.destroy(); reject(new Error("Timeout")); });
   });
 }
 
-function calcMetrics(stats){
-  if(!stats) return null;
-  try{
-    const played = stats.fixtures?.played?.total || 0;
-    if(!played) return null;
-    const draws  = stats.fixtures?.draws?.total  || 0;
-    const gf     = stats.goals?.for?.total?.total    || 0;
-    const ga     = stats.goals?.against?.total?.total|| 0;
-    const gpg    = +(gf/played).toFixed(2);
-    const gag    = +(ga/played).toFixed(2);
-    const exp    = +((gpg+gag)*0.88).toFixed(2);
-    const form   = (stats.form||"").slice(-5);
-    const drawPct= Math.round(draws/played*100);
-    const btts   = Math.round((gpg>0.9&&gag>0.9?0.62:0.38)*100);
-    const o25    = exp>2.5?65:exp>2.0?52:38;
-    let p01,p23,p4p;
-    if(exp<1.4)      {p01=32;p23=48;p4p=20;}
-    else if(exp<2.0) {p01=22;p23=52;p4p=26;}
-    else if(exp<2.6) {p01=14;p23=54;p4p=32;}
-    else if(exp<3.2) {p01=10;p23=48;p4p=42;}
-    else             {p01=7; p23=40;p4p=53;}
-    return {played,draws,gpg,gag,exp,drawPct,form,btts,o25,p01,p23,p4p};
-  } catch(e){ return null; }
+// TheSportsDB League IDs (δωρεάν)
+const LEAGUES = [
+  {id:"4328",name:"English Premier League"},
+  {id:"4335",name:"La Liga"},
+  {id:"4331",name:"Bundesliga"},
+  {id:"4332",name:"Serie A"},
+  {id:"4334",name:"Ligue 1"},
+  {id:"4337",name:"Eredivisie"},
+  {id:"4344",name:"Primeira Liga"},
+  {id:"4338",name:"Super Lig"},
+  {id:"4346",name:"Scottish Premiership"},
+  {id:"4399",name:"Belgian Pro League"},
+  {id:"4480",name:"MLS"},
+  {id:"4351",name:"Brasileirao"},
+  {id:"4406",name:"Argentine Primera"},
+  {id:"4443",name:"Super League Greece"},
+  {id:"4480",name:"Liga MX"},
+  {id:"4356",name:"UEFA Champions League"},
+  {id:"4358",name:"UEFA Europa League"},
+  {id:"4882",name:"FIFA Club World Cup"},
+  {id:"4579",name:"Saudi Pro League"},
+  {id:"4395",name:"J1 League"},
+  {id:"4341",name:"Primeira Liga"},
+  {id:"4347",name:"Championship"},
+  {id:"4350",name:"League One"},
+];
+
+function calcAnalysis(homeStats, awayStats){
+  const safe=(a,b,fb)=>a!=null&&b!=null?(a+b)/2:a!=null?a:b!=null?b:fb;
+
+  const hGpg = homeStats?.gpg || 1.4;
+  const aGpg = awayStats?.gpg || 1.2;
+  const hGag = homeStats?.gag || 1.2;
+  const aGag = awayStats?.gag || 1.2;
+  const exp  = +((hGpg+aGpg+hGag+aGag)/2*0.85).toFixed(2);
+
+  let p01,p23,p4p;
+  if(exp<1.4)      {p01=32;p23=48;p4p=20;}
+  else if(exp<2.0) {p01=22;p23=52;p4p=26;}
+  else if(exp<2.6) {p01=14;p23=54;p4p=32;}
+  else if(exp<3.2) {p01=10;p23=48;p4p=42;}
+  else             {p01=7; p23=40;p4p=53;}
+
+  const hDraw = homeStats?.drawPct || 27;
+  const aDraw = awayStats?.drawPct || 27;
+  const ftDraw= Math.round((hDraw+aDraw)/2);
+  const htDraw= Math.round(ftDraw*0.82);
+  const btts  = Math.round((hGpg>0.9&&aGpg>0.9?62:40));
+  const o25   = exp>2.5?65:exp>2.0?52:38;
+
+  return {
+    p01,p23,p4p,ftDraw,htDraw,btts,o25,exp,
+    hForm: homeStats?.form||"",
+    aForm: awayStats?.form||""
+  };
 }
 
-function mergeMetrics(h,a){
-  const s=(x,y,fb)=>x!=null&&y!=null?(x+y)/2:x!=null?x:y!=null?y:fb;
-  const hh=h||{}; const aa=a||{};
-  return {
-    p01:    Math.round(s(hh.p01,aa.p01,18)),
-    p23:    Math.round(s(hh.p23,aa.p23,52)),
-    p4p:    Math.round(s(hh.p4p,aa.p4p,28)),
-    drawPct:Math.round(s(hh.drawPct,aa.drawPct,27)),
-    htDraw: Math.round(s(hh.drawPct,aa.drawPct,27)*0.82),
-    btts:   Math.round(s(hh.btts,aa.btts,45)),
-    o25:    Math.round(s(hh.o25,aa.o25,50)),
-    expGoals:+s(hh.exp,aa.exp,2.5).toFixed(2),
-    hForm:  hh.form||"",
-    aForm:  aa.form||""
-  };
+async function getTeamStats(teamId, leagueId){
+  try{
+    // TheSportsDB team last 5 results
+    const url = `https://www.thesportsdb.com/api/v1/json/3/eventslast.php?id=${teamId}`;
+    const data = await apiGet(url);
+    const events = (data.results||[]).slice(-8);
+    if(!events.length) return null;
+
+    let gf=0,ga=0,draws=0,played=0;
+    let form="";
+    for(const e of events.slice(-5)){
+      const hScore = parseInt(e.intHomeScore||0);
+      const aScore = parseInt(e.intAwayScore||0);
+      const isHome = e.idHomeTeam === String(teamId);
+      const myG  = isHome ? hScore : aScore;
+      const oppG = isHome ? aScore : hScore;
+      gf += myG; ga += oppG; played++;
+      if(myG>oppG) form+="W";
+      else if(myG===oppG){ form+="D"; draws++; }
+      else form+="L";
+    }
+    if(!played) return null;
+    return {
+      gpg:+(gf/played).toFixed(2),
+      gag:+(ga/played).toFixed(2),
+      drawPct:Math.round(draws/played*100),
+      form
+    };
+  }catch(e){ return null; }
 }
 
 async function main(){
   const today = fmtISO(new Date());
-  const season = new Date().getFullYear();
   console.log(`\n🔍 ScoutCoupon · ${today}`);
   console.log("=".repeat(40));
 
-  // Step 1: Get fixtures
-  console.log("\n📅 Βήμα 1: Αντλώ αγώνες...");
-  const fix = await apiRequest(`/fixtures?date=${today}`);
-  const fixtures = fix.response || [];
-  console.log(`   ✅ ${fixtures.length} αγώνες`);
+  const allMatches = [];
+  const seenMatches = new Set();
 
-  if(!fixtures.length){
+  console.log(`\n📅 Αντλώ αγώνες από TheSportsDB...`);
+
+  for(const league of LEAGUES){
+    try{
+      await sleep(300);
+      const url = `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${today}&s=Soccer&l=${league.id}`;
+      const data = await apiGet(url);
+      const events = data.events || [];
+
+      for(const e of events){
+        const key = `${e.strHomeTeam}_${e.strAwayTeam}`;
+        if(seenMatches.has(key)) continue;
+        seenMatches.add(key);
+
+        // Only upcoming matches
+        const status = (e.strStatus||"").toLowerCase();
+        if(status==="finished"||status==="ft"||status==="aet") continue;
+
+        allMatches.push({
+          league: e.strLeague||league.name,
+          flag: flagFor(e.strLeague||league.name),
+          home: e.strHomeTeam||"",
+          away: e.strAwayTeam||"",
+          time: e.strTime ? e.strTime.substring(0,5) : "",
+          homeId: e.idHomeTeam,
+          awayId: e.idAwayTeam,
+          leagueId: league.id
+        });
+      }
+      if(events.length) console.log(`   ✅ ${league.name}: ${events.length} αγώνες`);
+    }catch(e){
+      console.log(`   ⚠️ ${league.name}: ${e.message}`);
+    }
+  }
+
+  console.log(`\n   📊 Σύνολο: ${allMatches.length} αγώνες`);
+
+  if(!allMatches.length){
     saveData(today,[]);
-    console.log("   ⚠️ Δεν υπάρχουν αγώνες σήμερα");
+    console.log("   ⚠️ Δεν βρέθηκαν αγώνες");
     return;
   }
 
-  // Step 2: Team stats (max 15 matches = 30 API calls)
-  console.log(`\n📊 Βήμα 2: Στατιστικά ομάδων...`);
-  const toProcess = fixtures.slice(0,15);
-  const matches = [];
+  // Get team stats (max 15 matches)
+  console.log(`\n📈 Στατιστικά ομάδων (max 15)...`);
+  const toProcess = allMatches.slice(0,15);
+  const processed = [];
 
   for(let i=0; i<toProcess.length; i++){
-    const f = toProcess[i];
-    const league  = f.league?.name||"";
-    const leagueId= f.league?.id;
-    const home    = f.teams?.home?.name||"";
-    const away    = f.teams?.away?.name||"";
-    const homeId  = f.teams?.home?.id;
-    const awayId  = f.teams?.away?.id;
-    const time    = (f.fixture?.date||"").split("T")[1]?.substring(0,5)||"";
+    const m = toProcess[i];
+    console.log(`   [${i+1}/${toProcess.length}] ${m.home} vs ${m.away}`);
 
-    console.log(`   [${i+1}/${toProcess.length}] ${home} vs ${away}`);
+    await sleep(400);
+    const hStats = await getTeamStats(m.homeId, m.leagueId);
+    await sleep(400);
+    const aStats = await getTeamStats(m.awayId, m.leagueId);
 
-    await sleep(300);
-    const hRes = await apiRequest(`/teams/statistics?team=${homeId}&league=${leagueId}&season=${season}`);
-    await sleep(300);
-    const aRes = await apiRequest(`/teams/statistics?team=${awayId}&league=${leagueId}&season=${season}`);
+    const analysis = calcAnalysis(hStats, aStats);
+    console.log(`      ✅ Exp:${analysis.exp} · H:${analysis.hForm} A:${analysis.aForm}`);
 
-    const hM = calcMetrics(hRes.response);
-    const aM = calcMetrics(aRes.response);
-    const metrics = mergeMetrics(hM, aM);
-
-    console.log(`      ✅ xG≈${metrics.expGoals} γκολ · Φόρμα H:${metrics.hForm} A:${metrics.aForm}`);
-
-    matches.push({
-      league, flag: flagFor(league),
-      home, away, time, metrics
+    processed.push({
+      league: m.league,
+      flag:   m.flag,
+      home:   m.home,
+      away:   m.away,
+      time:   m.time,
+      analysis
     });
   }
 
-  saveData(today, matches);
-  console.log(`\n✅ Τέλος! ${matches.length} αγώνες αναλύθηκαν.`);
+  saveData(today, processed);
+  console.log(`\n✅ Τέλος! ${processed.length} αγώνες αναλύθηκαν.`);
 }
 
 function saveData(date, matches){
   const dir = path.join(__dirname,"data");
   if(!fs.existsSync(dir)) fs.mkdirSync(dir,{recursive:true});
-  const payload = { date, generated: new Date().toISOString(), matchCount: matches.length, matches };
+  const payload = {date, generated:new Date().toISOString(), matchCount:matches.length, matches};
   fs.writeFileSync(path.join(dir,`${date}.json`), JSON.stringify(payload,null,2));
   fs.writeFileSync(path.join(dir,"latest.json"),   JSON.stringify(payload,null,2));
-  console.log(`\n💾 Αποθηκεύτηκε: data/${date}.json`);
+  console.log(`💾 data/${date}.json`);
 }
 
-main().catch(e => { console.error("💥",e.message); process.exit(1); });
+main().catch(e=>{ console.error("💥",e.message); process.exit(1); });
