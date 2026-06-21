@@ -93,7 +93,7 @@ async function main(){
 
   // Step 1: Get fixtures
   console.log("\n📅 Βήμα 1: Αντλώ αγώνες...");
- const fix = await apiRequest(`/fixtures?date=${today}&league=1&season=2025`); 
+  const fix = await apiRequest(`/fixtures?date=${today}`);
   const fixtures = fix.response || [];
   console.log(`   ✅ ${fixtures.length} αγώνες`);
 
